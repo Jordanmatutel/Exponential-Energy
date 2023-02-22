@@ -46,6 +46,9 @@ for i in range(closing_prices.size):
 for i in range(potential_energy.size):
     date1.append(i)
 
+# Calculate the EMA of the Potential Energy.
+ema1 = ema(potential_energy,date1.__len__())
+
 # Plot the data in two differents charts.
 # Chart 1
 fig, (ax, ax1) = plt.subplots(2, 1, sharex=True)
@@ -54,5 +57,6 @@ ax.set_title("Last 100 Closing Entries")
 
 # Chart 2
 ax1.plot(date1, potential_energy)
+ax1.plot(date1, ema1)
 ax1.set_title("Potential Energy Size")
 plt.show()
