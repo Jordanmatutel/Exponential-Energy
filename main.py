@@ -16,7 +16,7 @@ def ema(values, ema_length):
 
 exchange = ccxt.binance()
 symbol = 'BTC/USDT'
-period = 100
+period = 1000
 
 # Get the last close, highest and lowest prices.
 prices = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=period)
@@ -28,14 +28,21 @@ highest_prices = np.array([candle[2] for candle in prices])
 lowest_prices = np.array([candle[3] for candle in prices])
 
 # Inputs. Can be changed if you want different results.
-length = 10
+length = 100
 mass = 1
 g = 1
 
-# Calculate the potential energy
+# Calculate the variables used to calculate the kinetic/potential energy
+close_ema = ema(closing_prices, length)
 high_ema = ema(highest_prices, length)
 low_ema = ema(lowest_prices, length)
 h = high_ema - low_ema
+price_change = np.diff(close_ema)
+
+# Calculate the kinetic and the potential energy
+
+kinetic_energy = (0.5 * mass * np.power(price_change, 2))/100
+kinetic_energy = np.around(kinetic_energy, decimals=2)
 potential_energy = mass * g * h[1:]
 
 # Set up the range of data we have.
@@ -47,11 +54,11 @@ for i in range(potential_energy.size):
     date1.append(i)
 
 # Calculate the EMA of the Potential Energy.
-ema1 = ema(potential_energy,date1.__len__())
+ema1 = ema(potential_energy,25)
 
 # Plot the data in two differents charts.
 # Chart 1
-fig, (ax, ax1) = plt.subplots(2, 1, sharex=True)
+fig, (ax, ax1, ax2) = plt.subplots(3, 1, sharex=True)
 ax.plot(date, closing_prices)
 ax.set_title("Last 100 Closing Entries")
 
@@ -59,4 +66,8 @@ ax.set_title("Last 100 Closing Entries")
 ax1.plot(date1, potential_energy)
 ax1.plot(date1, ema1)
 ax1.set_title("Potential Energy Size")
+
+# Chart 3
+ax2.plot(date1, kinetic_energy)
+ax2.set_title("Kinetic Energy Size")
 plt.show()
