@@ -12,14 +12,46 @@ def ema(values, ema_length):
         ema[i] = alpha * values[i] + (1 - alpha) * ema[i-1]
     return ema
 
+# Function to calculate the RSI
+
+def calculate_rsi(prices, lenght):
+    deltas = np.diff(prices)
+    seed = deltas[:lenght + 1]
+    up = seed[seed >= 0].sum() / lenght
+    down = -seed[seed < 0].sum() / lenght
+    rs = up / down
+    rsi = np.zeros_like(prices)
+    rsi[:lenght] = 100. - 100. / (1. + rs)
+
+    for i in range(lenght, len(prices)):
+        delta = deltas[i - 1]
+        if delta > 0:
+            upval = delta
+            downval = 0.
+        else:
+            upval = 0.
+            downval = -delta
+
+        up = (up * (lenght - 1) + upval) / lenght
+        down = (down * (lenght - 1) + downval) / lenght
+
+        rs = up / down
+        rsi[i] = 100. - 100. / (1. + rs)
+        rsi = np.around(rsi, decimals=2)
+
+    return rsi/100
+
 # Set up the exchange, the symbol and the period of time.
 
 exchange = ccxt.binance()
-symbol = 'BTC/USDT'
+symbol = 'BTCUSDT'
 period = 1000
+smoothness = 0.2
 
 # Get the last close, highest and lowest prices.
 prices = exchange.fetch_ohlcv(symbol, timeframe='1h', limit=period)
+
+open_prices = np.array([candle[1] for candle in prices])
 
 closing_prices = np.array([candle[4] for candle in prices])
 
@@ -28,9 +60,9 @@ highest_prices = np.array([candle[2] for candle in prices])
 lowest_prices = np.array([candle[3] for candle in prices])
 
 # Inputs. Can be changed if you want different results.
-length = 100
-mass = 1
-g = 1
+length = 32
+mass = smoothness
+g = calculate_rsi(closing_prices, length)
 
 # Calculate the variables used to calculate the kinetic/potential energy
 close_ema = ema(closing_prices, length)
@@ -41,33 +73,33 @@ price_change = np.diff(close_ema)
 
 # Calculate the kinetic and the potential energy
 
-kinetic_energy = (0.5 * mass * np.power(price_change, 2))/100
+kinetic_energy = (0.5 * mass * np.power(price_change, 2))
 kinetic_energy = np.around(kinetic_energy, decimals=2)
-potential_energy = mass * g * h[1:]
+kinetic_energy = kinetic_energy.tolist()
+kinetic_energy.insert(-1, kinetic_energy[-2])
+
+potential_energy = (mass * g * h[0:])
 
 # Set up the range of data we have.
 date = []
-date1 = []
 for i in range(closing_prices.size):
     date.append(i)
-for i in range(potential_energy.size):
-    date1.append(i)
 
 # Calculate the EMA of the Potential Energy.
-ema1 = ema(potential_energy,25)
+ema1 = ema(potential_energy,32)
 
-# Plot the data in two differents charts.
+# Plot the data in three differents charts.
 # Chart 1
 fig, (ax, ax1, ax2) = plt.subplots(3, 1, sharex=True)
 ax.plot(date, closing_prices)
-ax.set_title("Last 100 Closing Entries")
+ax.set_title(f"Last {period} Closing Entries")
 
 # Chart 2
-ax1.plot(date1, potential_energy)
-ax1.plot(date1, ema1)
+ax1.plot(date, potential_energy)
+ax1.plot(date, ema1)
 ax1.set_title("Potential Energy Size")
 
 # Chart 3
-ax2.plot(date1, kinetic_energy)
+ax2.plot(date, kinetic_energy)
 ax2.set_title("Kinetic Energy Size")
 plt.show()
