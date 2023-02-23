@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 # Function to calculate the EMA
 
+
 def ema(values, ema_length):
     alpha = 2 / (ema_length + 1)
     ema = np.zeros(len(values))
@@ -60,7 +61,7 @@ highest_prices = np.array([candle[2] for candle in prices])
 lowest_prices = np.array([candle[3] for candle in prices])
 
 # Inputs. Can be changed if you want different results.
-length = 32
+length = 35
 mass = smoothness
 g = calculate_rsi(closing_prices, length)
 
@@ -85,9 +86,6 @@ date = []
 for i in range(closing_prices.size):
     date.append(i)
 
-# Calculate the EMA of the Potential Energy.
-ema1 = ema(potential_energy,32)
-
 # Plot the data in three differents charts.
 # Chart 1
 fig, (ax, ax1, ax2) = plt.subplots(3, 1, sharex=True)
@@ -96,10 +94,38 @@ ax.set_title(f"Last {period} Closing Entries")
 
 # Chart 2
 ax1.plot(date, potential_energy)
-ax1.plot(date, ema1)
-ax1.set_title("Potential Energy Size")
+ax1.set_title("Potential Energy")
 
 # Chart 3
 ax2.plot(date, kinetic_energy)
-ax2.set_title("Kinetic Energy Size")
+ax2.set_title("Kinetic Energy")
+plt.show()
+
+
+# One Dimensional Situations
+# Calculate the variables used to calculate the kinetic/potential energy
+h = np.max(closing_prices) - np.min(closing_prices)
+g = calculate_rsi(closing_prices, length)
+v = np.diff(closing_prices)
+
+# Calculate the kinetic and the potential energy
+
+kinetic_energy = (0.5 * mass * np.power(v, 2))
+kinetic_energy = np.around(kinetic_energy, decimals=2)
+kinetic_energy = kinetic_energy.tolist()
+kinetic_energy.insert(-1, kinetic_energy[-2])
+potential_energy = (mass * g * h)
+
+# Chart 1
+fig, (ax, ax1, ax2) = plt.subplots(3, 1, sharex=True)
+ax.plot(date, closing_prices)
+ax.set_title(f"Last {period} Closing Entries")
+
+# Chart 2
+ax1.plot(date, potential_energy)
+ax1.set_title("Potential Energy")
+
+# Chart 3
+ax2.plot(date, kinetic_energy)
+ax2.set_title("Kinetic Energy")
 plt.show()
